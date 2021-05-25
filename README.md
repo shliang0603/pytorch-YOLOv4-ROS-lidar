@@ -1,22 +1,22 @@
-# Pytorch-YOLOv4
+# Pytorch-YOLOv4-ROS-lidar
 
 ![](https://img.shields.io/static/v1?label=python&message=3.6|3.7&color=blue)
 ![](https://img.shields.io/static/v1?label=pytorch&message=1.4&color=<COLOR>)
 [![](https://img.shields.io/static/v1?label=license&message=Apache2&color=green)](./License.txt)
 
-A minimal PyTorch implementation of YOLOv4.
-- Paper Yolo v4: https://arxiv.org/abs/2004.10934
-- Source code:https://github.com/AlexeyAB/darknet
-- More details: http://pjreddie.com/darknet/yolo/
+`YOLOv4`的最小`Pytorch`实现
+- YOLOv4论文 Yolo v4：https://arxiv.org/abs/2004.10934
+- YOLOv4的源码地址：https://github.com/AlexeyAB/darknet
+- 关于YOlOv4的更多细节： http://pjreddie.com/darknet/yolo/
 
 
-- [x] Inference
-- [x] Train
-    - [x] Mocaic
+- [x] 参考
+- [x] 训练
+    - [x] Mocaic（类似马赛克的数据增强）
 
 ```
 ├── README.md
-├── dataset.py            dataset
+├── dataset.py            # 数据集
 ├── demo.py               demo to run pytorch --> tool/darknet2pytorch
 ├── demo_darknet2onnx.py  tool to convert into onnx --> tool/darknet2pytorch
 ├── demo_pytorch2onnx.py  tool to convert into onnx
@@ -38,15 +38,14 @@ A minimal PyTorch implementation of YOLOv4.
 
 ![image](https://user-gold-cdn.xitu.io/2020/4/26/171b5a6c8b3bd513?w=768&h=576&f=jpeg&s=78882)
 
-# 0. Weights Download
+# 0. 权重下载（Weights Download）
 
-## 0.1 darknet
+## 0.1 darknet权重下载
 - baidu(https://pan.baidu.com/s/1dAGEW8cm-dqK14TbhhVetA     Extraction code:dm5b)
 - google(https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT)
 
-## 0.2 pytorch
-you can use darknet2pytorch to convert it yourself, or download my converted model.
-
+## 0.2 pytorch权重下载
+你可以使用`darknet2pytorch`把`darknet的权重`转换为`pytorch的权重`，或者直接从下面下载已经转换好的pytorch权重模型。
 - baidu
     - yolov4.pth(https://pan.baidu.com/s/1ZroDvoGScDgtE1ja_QqJVw Extraction code:xrq9) 
     - yolov4.conv.137.pth(https://pan.baidu.com/s/1ovBie4YyVQQoUrC3AY0joA Extraction code:kcel)
@@ -54,14 +53,14 @@ you can use darknet2pytorch to convert it yourself, or download my converted mod
     - yolov4.pth(https://drive.google.com/open?id=1wv_LiFeCRYwtpkqREPeI13-gPELBDwuJ)
     - yolov4.conv.137.pth(https://drive.google.com/open?id=1fcbR0bWzYfIEdLJPzOsn4R5mlvR6IQyA)
 
-# 1. Train
+# 1. 训练（Train）
 
-[use yolov4 to train your own data](Use_yolov4_to_train_your_own_data.md)
+[使用yolov4训练你自己的数据集](Use_yolov4_to_train_your_own_data.md)
 
-1. Download weight
-2. Transform data
+1. 下载权重（Download weight）
+2.  转换数据（Transform data）
 
-    For coco dataset,you can use tool/coco_annotation.py.
+    对于coco数据集，你可以使用`tool/coco_annotation.py`
     ```
     # train.txt
     image_path1 x1,y1,x2,y2,id x1,y1,x2,y2,id x1,y1,x2,y2,id ...
@@ -69,14 +68,14 @@ you can use darknet2pytorch to convert it yourself, or download my converted mod
     ...
     ...
     ```
-3. Train
+3. 训练（Train）
 
-    you can set parameters in cfg.py.
+    你可以在` cfg.py`文件中对参数进行设置
     ```
      python train.py -g [GPU_ID] -dir [Dataset direction] ...
     ```
 
-# 2. Inference
+# 2. 推理（Inference）
 
 ## 2.1 Performance on MS COCO dataset (using pretrained DarknetWeights from <https://github.com/AlexeyAB/darknet>)
 
@@ -102,38 +101,39 @@ See following sections for more details of conversions.
 | TensorRT FP16 + BatchedNMSPlugin | 0.412| 0.625 |       0.445 |       0.200 |       0.446 |       0.563 |
 
 
-## 2.2 Image input size for inference
+## 2.2 推理图像的输入大小
 
-Image input size is NOT restricted in `320 * 320`, `416 * 416`, `512 * 512` and `608 * 608`.
-You can adjust your input sizes for a different input ratio, for example: `320 * 608`.
-Larger input size could help detect smaller targets, but may be slower and GPU memory exhausting.
+- 图像的输入尺寸并不一定限制为 `320 * 320`, `416 * 416`, `512 * 512` 和`608 * 608`
+- 你可以调整输入尺寸大小到不同的比例，例如：`320 * 608`
+-较大的输入大小，可以帮助`检测较小的目标`，但速度就会更慢，同时GPU测内存可能会全部耗尽！
 
 ```py
 height = 320 + 96 * n, n in {0, 1, 2, 3, ...}
 width  = 320 + 96 * m, m in {0, 1, 2, 3, ...}
 ```
 
-## 2.3 **Different inference options**
+## 2.3 不同推理选项
 
-- Load the pretrained darknet model and darknet weights to do the inference (image size is configured in cfg file already)
+- 加载`预训练的Darknet模型`和`Darknet权重`以进行推理（图像大小已在cfg文件中配置）
 
     ```sh
     python demo.py -cfgfile <cfgFile> -weightfile <weightFile> -imgfile <imgFile>
     ```
 
-- Load pytorch weights (pth file) to do the inference
+- 加载`pytorch预训练模型`（`pth格式模型`）进行推理
 
     ```sh
     python models.py <num_classes> <weightfile> <imgfile> <IN_IMAGE_H> <IN_IMAGE_W> <namefile(optional)>
     ```
     
-- Load converted ONNX file to do inference (See section 3 and 4)
+- 加载转换的`ONNX模型文件`进行推理（具体参考第3部分和第4部分）
 
-- Load converted TensorRT engine file to do inference (See section 5)
+- 加载转换的`TensorRT engine模型文件`进行推理（具体参考第5部分）
 
-## 2.4 Inference output
+## 2.4 推理输出（Inference output）
 
-There are 2 inference outputs.
+这里的推理输出，主要有`两部分组成`：
+
 - One is locations of bounding boxes, its shape is  `[batch, num_boxes, 1, 4]` which represents x1, y1, x2, y2 of each bounding box.
 - The other one is scores of bounding boxes which is of shape `[batch, num_boxes, num_classes]` indicating scores of all classes for each bounding box.
 
