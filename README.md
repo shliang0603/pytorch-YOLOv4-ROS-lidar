@@ -1,3 +1,5 @@
+（代码是20200525从[pytorch-YOLOv4](https://github.com/Tianxiaomo/pytorch-YOLOv4)fork过来的，该仓库已经）
+
 # Pytorch-YOLOv4-ROS-lidar
 
 ![](https://img.shields.io/static/v1?label=python&message=3.6|3.7&color=blue)
@@ -134,17 +136,17 @@ width  = 320 + 96 * m, m in {0, 1, 2, 3, ...}
 
 这里的推理输出，主要有`两部分组成`：
 
-- One is locations of bounding boxes, its shape is  `[batch, num_boxes, 1, 4]` which represents x1, y1, x2, y2 of each bounding box.
-- The other one is scores of bounding boxes which is of shape `[batch, num_boxes, num_classes]` indicating scores of all classes for each bounding box.
+- 第一部分是bounding boxes的位置，它的shape是`[batch, num_boxes, 1, 4]` ，每个bounding box被表示成` x1, y1, x2, y2`
+- 另一部分是bounding boxes的scores，它的shape是`[batch, num_boxes, num_classes]` ，表示每个bounding boxes（边界框）在所有类别上的分数！
 
-Until now, still a small piece of post-processing including NMS is required. We are trying to minimize time and complexity of post-processing.
+到目前为止，仍需要包括`NMS`在内的一小部分后处理。 我们正在努力减少后处理的时间和复杂性。
 
 
-# 3. Darknet2ONNX
+# 3. Darknet模型转换为ONNX模型进行推理（Darknet2ONNX）
 
-- **This script is to convert the official pretrained darknet model into ONNX**
+- **这个脚本是转换darknet官方预训练的模型到onnx模型**
 
-- **Pytorch version Recommended:**
+- **Pytorch的版本推荐**
 
     - Pytorch 1.4.0 for TensorRT 7.0 and higher
     - Pytorch 1.5.0 and 1.6.0 for TensorRT 7.1.2 and higher
@@ -155,23 +157,23 @@ Until now, still a small piece of post-processing including NMS is required. We 
     pip install onnxruntime
     ```
 
-- **Run python script to generate ONNX model and run the demo**
+- **运行python脚本生成onnx模型，并且运行测试demo**
 
     ```sh
     python demo_darknet2onnx.py <cfgFile> <weightFile> <imageFile> <batchSize>
     ```
 
-## 3.1 Dynamic or static batch size
+## 3.1 动态或静态的batch size（Dynamic or static batch size）
 
 - **Positive batch size will generate ONNX model of static batch size, otherwise, batch size will be dynamic**
     - Dynamic batch size will generate only one ONNX model
     - Static batch size will generate 2 ONNX models, one is for running the demo (batch_size=1)
 
-# 4. Pytorch2ONNX
+# 4. Pytorch模型转换为ONNX模型进行推理（Pytorch2ONNX）
 
-- **You can convert your trained pytorch model into ONNX using this script**
+- **你可以使用这个脚本，转换pytorch预训练的模型到onnx模型然后进行推理测试**
 
-- **Pytorch version Recommended:**
+- **Pytorch版本推荐：**
 
     - Pytorch 1.4.0 for TensorRT 7.0 and higher
     - Pytorch 1.5.0 and 1.6.0 for TensorRT 7.1.2 and higher
@@ -182,7 +184,7 @@ Until now, still a small piece of post-processing including NMS is required. We 
     pip install onnxruntime
     ```
 
-- **Run python script to generate ONNX model and run the demo**
+- **运行python脚本生成onnx模型，并且运行测试demo**
 
     ```sh
     python demo_pytorch2onnx.py <weight_file> <image_path> <batch_size> <n_classes> <IN_IMAGE_H> <IN_IMAGE_W>
@@ -201,20 +203,20 @@ Until now, still a small piece of post-processing including NMS is required. We 
     - Static batch size will generate 2 ONNX models, one is for running the demo (batch_size=1)
 
 
-# 5. ONNX2TensorRT
+# 5. ONNX模型转换为TensorRT模型进行推理测试（ONNX2TensorRT）
 
-- **TensorRT version Recommended: 7.0, 7.1**
+- **TensorRT的版本推荐： 7.0, 7.1**
 
-## 5.1 Convert from ONNX of static Batch size
+## 5.1 把ONNX模型转换为静态（static）Batch size的TensorRT模型
 
 - **Run the following command to convert YOLOv4 ONNX model into TensorRT engine**
 
     ```sh
     trtexec --onnx=<onnx_file> --explicitBatch --saveEngine=<tensorRT_engine_file> --workspace=<size_in_megabytes> --fp16
     ```
-    - Note: If you want to use int8 mode in conversion, extra int8 calibration is needed.
+    - 注意：如果要在转换中使用int8模式，则需要额外的int8校准。
 
-## 5.2 Convert from ONNX of dynamic Batch size
+## 5.2 把ONNX模型转换为动态（dynamic）Batch size的TensorRT模型
 
 - **Run the following command to convert YOLOv4 ONNX model into TensorRT engine**
 
@@ -231,20 +233,20 @@ Until now, still a small piece of post-processing including NMS is required. We 
     --workspace=2048 --saveEngine=yolov4_-1_3_320_512_dynamic.engine --fp16
     ```
 
-## 5.3 Run the demo
+## 5.3 运行demo
 
 ```sh
 python demo_trt.py <tensorRT_engine_file> <input_image> <input_H> <input_W>
 ```
 
-- This demo here only works when batchSize is dynamic (1 should be within dynamic range) or batchSize=1, but you can update this demo a little for other dynamic or static batch sizes.
+- 这个demo仅在batchSize为动态（1应该在动态范围内）或batchSize = 1时起作用，但是您可以针对其他动态或静态批处理大小来稍微更新此demo。
     
-- Note1: input_H and input_W should agree with the input size in the original ONNX file.
+- 注意1：input_H和input_W应该与原始ONNX文件中的输入大小一致。
     
-- Note2: extra NMS operations are needed for the tensorRT output. This demo uses python NMS code from `tool/utils.py`.
+- 注意2：tensorRT输出需要额外的NMS操作。 该demo使用来自`tool/utils.py`的python NMS代码。
 
 
-# 6. ONNX2Tensorflow
+# 6. 把ONNX模型转换为Tensorflow模型进行推理测试（ONNX2Tensorflow）
 
 - **First:Conversion to ONNX**
 
@@ -257,7 +259,7 @@ python demo_trt.py <tensorRT_engine_file> <input_image> <input_H> <input_W>
     
     Note:Errors will occur when using "pip install onnx-tf", at least for me,it is recommended to use source code installation
 
-# 7. ONNX2TensorRT and DeepStream Inference
+# 7. ONNX模型转换为TensorRT模型，并使用DeepStream推理（ONNX2TensorRT and DeepStream Inference）
   
   1. Compile the DeepStream Nvinfer Plugin 
   
@@ -277,7 +279,7 @@ python demo_trt.py <tensorRT_engine_file> <input_image> <input_H> <input_W>
   trtexec --onnx=<onnx_file> --explicitBatch --shapes=input:Xx3xHxW --optShapes=input:Xx3xHxW --maxShapes=input:Xx3xHxW --minShape=input:1x3xHxW --saveEngine=<tensorRT_engine_file> --fp16
   ```
   
-  Note :The maxShapes could not be larger than model original shape.
+  注意：maxShapes不能大于模型的原始形状。
   
   3. Write the deepstream config file for the TRT Engine.
   
